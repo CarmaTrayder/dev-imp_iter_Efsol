@@ -6,11 +6,21 @@ foreach ($reservations in $newReservations) {
     Add-DhcpServerv4Reservation -ScopeID "172.17.0.0" -IPAddress $reservations.IPAddress -ClientId $reservations.ClientID -Description $reservations.Description -Name $reservations.Name -Type $reservations.Type
 }
 foreach ($reservations in $csvData) {
-    $existingReservations = $existingReservations | Where-Object { $_.ClientId -eq $reservations.ClientId }
+    $existingReservations = $existingReservations | Where-Object { $_.ClientId -eq $reservations.ClientId -and $_.IPAddress -notin $reservations.IPAddress }
     if ($existingReservations -ne $null) {
-        $confirmation = Read-Host "Резервирование для клиента $($reservations.ClientId) уже сущществует. Заменить? (y/n)"
+        $confirmation = Read-Host "Резервирование для клиента $($reservations.ClientId) уже существует. Заменить? (y/n)"
         if ($confirmation -eq $null) {
             Set-DhcpServerv4Reservation -IPAddress $reservations.IPAddress -ClientId $reservations.ClientID -Description $reservations.Description -Name $reservations.Name -Type $reservations.Type
         }
     }
 }
+foreach ($reservations in $csvData) {
+    $existingReservations = $existingReservations | Where-Object { $_.IPAddress -eq $reservations.IPAddress -and $_.ClientId -notin $reservations.ClientId }
+    if ($existingReservations -ne $null) {
+        $confirmation = Read-Host "Резервирование для клиента $($reservations.IPAddress) уже существует. Заменить? (y/n)"
+        if ($confirmation -eq $null) {
+            Set-DhcpServerv4Reservation -IPAddress $reservations.IPAddress -ClientId $reservations.ClientID -Description $reservations.Description -Name $reservations.Name -Type $reservations.Type
+        }
+    }
+}
+
